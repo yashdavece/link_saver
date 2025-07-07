@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>LinkSaver – Save Links Smarter</title>
+  <title>LinkSaver – Sign Up & Login</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <style>
@@ -14,7 +14,6 @@
       --text-light: #1f2937;
       --text-dark: #f1f5f9;
     }
-    * { box-sizing: border-box; }
     body {
       font-family: 'Inter', sans-serif;
       background: var(--bg-light);
@@ -27,7 +26,7 @@
       background: var(--bg-dark); color: var(--text-dark);
     }
     .container {
-      width:100%; max-width: 480px;
+      width:100%; max-width: 500px;
       background: var(--card-light); border-radius:12px;
       box-shadow: 0 8px 24px rgba(0,0,0,0.1);
       padding:2rem; transition: all .3s ease;
@@ -63,44 +62,38 @@
     .footer {
       text-align:center; margin-top:1rem; color:gray; font-size:.85rem;
     }
-    .switch-link {
-      text-align: center; color: #6366f1; cursor: pointer;
-      font-weight: 600; margin-top: 0.5rem;
-    }
   </style>
 </head>
 <body>
-  <button class="toggle-dark" onclick="toggleDarkMode()">🌃</button>
+  <button class="toggle-dark" onclick="toggleDarkMode()">🌓</button>
   <div class="container">
     <h2>🔗 LinkSaver</h2>
 
-    <!-- Sign Up Form -->
+    <div id="auth-toggle">
+      <button onclick="showLogin()">Login</button>
+      <button onclick="showSignup()">Sign Up</button>
+    </div>
+
     <div id="signup-form" class="hidden">
-      <p>Create an account</p>
-      <input type="text" id="signup-name" placeholder="Full Name">
+      <input type="text" id="signup-name" placeholder="Your Name">
       <input type="email" id="signup-email" placeholder="Email">
       <input type="password" id="signup-password" placeholder="Password">
       <input type="password" id="signup-confirm" placeholder="Confirm Password">
-      <button onclick="signupUser()">Sign Up</button>
-      <div class="switch-link" onclick="showLogin()">Already have an account? Login</div>
+      <button onclick="handleSignup()">Sign Up</button>
     </div>
 
-    <!-- Login Form -->
-    <div id="login-form">
-      <p>Welcome back!</p>
+    <div id="login-form" class="hidden">
       <input type="email" id="login-email" placeholder="Email">
       <input type="password" id="login-password" placeholder="Password">
-      <button onclick="loginUser()">Login</button>
-      <div class="switch-link" onclick="showSignup()">New here? Sign up</div>
+      <button onclick="handleLogin()">Login</button>
     </div>
 
-    <!-- Link Save Form -->
     <div id="link-form" class="hidden">
-      <input type="email" id="user-email" readonly>
+      <p>Welcome, <span id="user-email"></span></p>
       <input type="url" id="link-input" placeholder="https://example.com">
       <textarea id="note-input" placeholder="Optional note…"></textarea>
       <button onclick="submitLink()">Save Link</button>
-      <button onclick="logoutUser()" style="margin-top:1rem; background:#ef4444;">Logout</button>
+      <button onclick="handleLogout()">Logout</button>
     </div>
 
     <p id="message"></p>
@@ -110,10 +103,8 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
     import {
-      getAuth, onAuthStateChanged,
-      createUserWithEmailAndPassword,
-      signInWithEmailAndPassword,
-      signOut
+      getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut,
+      onAuthStateChanged
     } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
 
     const firebaseConfig = {
@@ -129,70 +120,87 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    const loginForm = document.getElementById("login-form");
     const signupForm = document.getElementById("signup-form");
+    const loginForm = document.getElementById("login-form");
     const linkForm = document.getElementById("link-form");
-    const message = document.getElementById("message");
     const userEmail = document.getElementById("user-email");
+    const message = document.getElementById("message");
 
-    window.showSignup = () => {
-      loginForm.classList.add("hidden");
+    const showSignup = () => {
       signupForm.classList.remove("hidden");
-      message.innerText = "";
-    };
-    window.showLogin = () => {
-      signupForm.classList.add("hidden");
-      loginForm.classList.remove("hidden");
-      message.innerText = "";
+      loginForm.classList.add("hidden");
     };
 
-    window.signupUser = async () => {
+    const showLogin = () => {
+      loginForm.classList.remove("hidden");
+      signupForm.classList.add("hidden");
+    };
+
+    window.showSignup = showSignup;
+    window.showLogin = showLogin;
+
+    window.handleSignup = async () => {
       const email = document.getElementById("signup-email").value.trim();
       const pass = document.getElementById("signup-password").value;
       const confirm = document.getElementById("signup-confirm").value;
-      if (pass !== confirm) return message.innerText = "❌ Passwords do not match.";
+
+      if (!email || !pass || !confirm || pass !== confirm) {
+        message.innerText = "❌ Please check all fields and confirm password match.";
+        return;
+      }
+
       try {
         await createUserWithEmailAndPassword(auth, email, pass);
+        message.innerText = "✅ Sign up successful. You are now logged in.";
       } catch (err) {
         message.innerText = `❌ ${err.message}`;
       }
     };
 
-    window.loginUser = async () => {
+    window.handleLogin = async () => {
       const email = document.getElementById("login-email").value.trim();
       const pass = document.getElementById("login-password").value;
+      if (!email || !pass) {
+        message.innerText = "❌ Please enter email and password.";
+        return;
+      }
+
       try {
         await signInWithEmailAndPassword(auth, email, pass);
+        message.innerText = "✅ Login successful.";
       } catch (err) {
         message.innerText = `❌ ${err.message}`;
       }
     };
 
-    window.logoutUser = async () => {
+    window.handleLogout = async () => {
       await signOut(auth);
+      message.innerText = "✅ You have been logged out.";
     };
 
     onAuthStateChanged(auth, (user) => {
       if (user) {
+        document.getElementById("auth-toggle").classList.add("hidden");
         loginForm.classList.add("hidden");
         signupForm.classList.add("hidden");
         linkForm.classList.remove("hidden");
-        userEmail.value = user.email;
-        message.innerText = `✅ Logged in as ${user.email}`;
+        userEmail.textContent = user.email;
       } else {
-        loginForm.classList.remove("hidden");
-        signupForm.classList.add("hidden");
+        document.getElementById("auth-toggle").classList.remove("hidden");
         linkForm.classList.add("hidden");
       }
     });
 
     window.submitLink = async () => {
       const payload = {
-        email: userEmail.value,
+        email: userEmail.textContent,
         link: document.getElementById("link-input").value.trim(),
         note: document.getElementById("note-input").value.trim()
       };
-      if (!payload.link) return message.innerText = "❌ Please enter a link.";
+      if (!payload.link) {
+        message.innerText = "❌ Please enter a link.";
+        return;
+      }
       try {
         const res = await fetch("https://your-n8n-server.com/webhook/save-link", {
           method: "POST",
