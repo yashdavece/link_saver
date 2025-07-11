@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>LinkSaver – Sign Up & Login</title>
+  <title>LinkSaver – Save Your Links</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <style>
@@ -88,7 +88,6 @@
     </div>
 
     <div id="signup-form" class="hidden">
-      <input type="text" id="signup-name" placeholder="Your Name">
       <input type="email" id="signup-email" placeholder="Email">
       <input type="password" id="signup-password" placeholder="Password">
       <input type="password" id="signup-confirm" placeholder="Confirm Password">
@@ -157,7 +156,7 @@
       const pass = document.getElementById("signup-password").value;
       const confirm = document.getElementById("signup-confirm").value;
 
-      if (!email || !pass || !confirm || pass !== confirm) {
+      if (!email || !pass || pass !== confirm) {
         message.innerText = "❌ Please check all fields and confirm password match.";
         return;
       }
@@ -222,6 +221,8 @@
         });
         if (!res.ok) throw new Error(res.statusText);
         message.innerText = "✅ Link saved!";
+        document.getElementById("link-input").value = "";
+        document.getElementById("note-input").value = "";
       } catch (err) {
         message.innerText = `❌ ${err.message}`;
       }
