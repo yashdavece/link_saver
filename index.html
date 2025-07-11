@@ -214,7 +214,7 @@
         return;
       }
       try {
-        const res = await fetch("https://your-n8n-server.com/webhook/save-link", {
+        const res = await fetch("http://localhost:5678/webhook-test/f31ded2b-3941-409f-800c-2efabefca165", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
